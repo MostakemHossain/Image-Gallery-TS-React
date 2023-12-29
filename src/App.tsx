@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useState } from "react";
 import "./App.css";
+import AddImageCard from "./components/Cards/AddImageCard";
 import ImageCard from "./components/Cards/ImageCard";
 import { initialImageData } from "./data";
 import { ImageGallery } from "./types/global.types";
@@ -99,9 +100,8 @@ function App() {
                   ></ImageCard>
                 ))}
               </SortableContext>
-              
+              <AddImageCard setGalleryData={setGalleryData} />
             </div>
-
           </DndContext>
         </div>
       </div>
