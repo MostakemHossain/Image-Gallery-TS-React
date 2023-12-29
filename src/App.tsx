@@ -9,14 +9,24 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 import { useState } from "react";
 import "./App.css";
+import ImageCard from "./components/Cards/ImageCard";
 import { initialImageData } from "./data";
 import { ImageGallery } from "./types/global.types";
 
 function App() {
- const [galleryData, setGalleryData] = useState(initialImageData);
+  const [galleryData, setGalleryData] = useState(initialImageData);
+  //handle select Image
+  const handleSelectImage = () => {};
+
+  //dnd code start here
   const [activeItem, setActiveItem] = useState<ImageGallery | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -26,26 +36,26 @@ function App() {
     useSensor(TouchSensor)
   );
 
-  const handleDragStart = (event:DragStartEvent) => {
-    const {id}= event.active;
-    if(!id) return;
+  const handleDragStart = (event: DragStartEvent) => {
+    const { id } = event.active;
+    if (!id) return;
 
     // current item
-    const currentItem= galleryData.find((item)=> item.id===id)
+    const currentItem = galleryData.find((item) => item.id === id);
 
-    setActiveItem(currentItem || null)
+    setActiveItem(currentItem || null);
   };
-  const handleDragEnd = (event:DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     setActiveItem(null);
-    const {active,over}= event
-    if(!over) return;
+    const { active, over } = event;
+    if (!over) return;
 
-    if(active.id===over.id){
-      setGalleryData((items)=>{
-        const oldIndex= items.findIndex((item)=>item.id===active.id);
-        const newIndex= items.findIndex((item)=>item.id===over.id);
-        return arrayMove(items,oldIndex,newIndex);
-      })
+    if (active.id === over.id) {
+      setGalleryData((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
   };
 
@@ -62,7 +72,22 @@ function App() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div>Image Gallery</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 p-8 gap-8">
+              <SortableContext
+                items={galleryData}
+                strategy={rectSortingStrategy}
+              >
+                {galleryData.map((imageItem) => (
+                  <ImageCard
+                    key={imageItem.id}
+                    id={imageItem.id}
+                    isSelected={imageItem.isSelected}
+                    slug={imageItem.slug}
+                    onClick={handleSelectImage}
+                  ></ImageCard>
+                ))}
+              </SortableContext>
+            </div>
           </DndContext>
         </div>
       </div>
