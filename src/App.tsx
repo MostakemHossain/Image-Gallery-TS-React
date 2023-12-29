@@ -24,7 +24,19 @@ import { ImageGallery } from "./types/global.types";
 function App() {
   const [galleryData, setGalleryData] = useState(initialImageData);
   //handle select Image
-  const handleSelectImage = () => {};
+  const handleSelectImage = (id: string | number) => {
+    const newGalleryData = galleryData.map((imageItem) => {
+      if (imageItem.id === id) {
+        return {
+          ...imageItem,
+          isSelected: !imageItem.isSelected,
+        };
+      }
+      return imageItem;
+    });
+
+      setGalleryData(newGalleryData);
+  };
 
   //dnd code start here
   const [activeItem, setActiveItem] = useState<ImageGallery | null>(null);
@@ -87,7 +99,9 @@ function App() {
                   ></ImageCard>
                 ))}
               </SortableContext>
+              
             </div>
+
           </DndContext>
         </div>
       </div>
