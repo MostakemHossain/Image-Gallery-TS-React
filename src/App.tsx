@@ -1,6 +1,7 @@
 import {
   DndContext,
   DragEndEvent,
+  DragOverlay,
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
@@ -19,13 +20,18 @@ import { useState } from "react";
 import "./App.css";
 import AddImageCard from "./components/Cards/AddImageCard";
 import ImageCard from "./components/Cards/ImageCard";
+import ImageOverlayCard from "./components/Cards/ImageOverlayCard";
+
 import { initialImageData } from "./data";
 import { ImageGallery } from "./types/global.types";
+import HeaderBlock from "./components/Header/Header";
+
 
 function App() {
   const [galleryData, setGalleryData] = useState(initialImageData);
-  //handle select Image
+
   const handleSelectImage = (id: string | number) => {
+    // if galleryData.isSelected === true then set to false and vice versa
     const newGalleryData = galleryData.map((imageItem) => {
       if (imageItem.id === id) {
         return {
@@ -33,14 +39,25 @@ function App() {
           isSelected: !imageItem.isSelected,
         };
       }
+
       return imageItem;
     });
 
-      setGalleryData(newGalleryData);
+    setGalleryData(newGalleryData);
   };
 
-  //dnd code start here
+  const handleOnDelete = (selectedItems: ImageGallery[]) => {
+    // if galleryData.isSelected === true then filter out the selected items and return the rest
+    const newGalleryData = galleryData.filter(
+      (imageItem) => !selectedItems.includes(imageItem)
+    );
+
+    setGalleryData(newGalleryData);
+  };
+
+  // DND CODE STARTS HERE
   const [activeItem, setActiveItem] = useState<ImageGallery | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -51,56 +68,71 @@ function App() {
 
   const handleDragStart = (event: DragStartEvent) => {
     const { id } = event.active;
+
     if (!id) return;
 
-    // current item
     const currentItem = galleryData.find((item) => item.id === id);
 
     setActiveItem(currentItem || null);
   };
+
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveItem(null);
     const { active, over } = event;
-    if (!over) return;
 
-    if (active.id === over.id) {
+    if (!over) {
+      return;
+    }
+
+    if (active.id !== over.id) {
       setGalleryData((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
+
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
+  // DND CODE ENDS HERE
 
   return (
-    <div className=" min-h-screen">
+    <div className="min-h-screen">
       <div className="container flex flex-col items-center">
         <div className="bg-white my-8 rounded-lg shadow max-w-5xl grid divide-y">
-          <header className="text-2xl">ShowCase</header>
-
-          {/* dnd context */}
+          <HeaderBlock onDelete={handleOnDelete} galleryData={galleryData} />
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="grid grid-cols-2 md:grid-cols-5 p-8 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-8 p-8">
               <SortableContext
                 items={galleryData}
                 strategy={rectSortingStrategy}
               >
-                {galleryData.map((imageItem) => (
-                  <ImageCard
-                    key={imageItem.id}
-                    id={imageItem.id}
-                    isSelected={imageItem.isSelected}
-                    slug={imageItem.slug}
-                    onClick={handleSelectImage}
-                  ></ImageCard>
-                ))}
+                {galleryData.map((imageItem) => {
+                  return (
+                    <ImageCard
+                      key={imageItem.id}
+                      id={imageItem.id}
+                      isSelected={imageItem.isSelected}
+                      slug={imageItem.slug}
+                      onClick={handleSelectImage}
+                    />
+                  );
+                })}
               </SortableContext>
               <AddImageCard setGalleryData={setGalleryData} />
+
+              <DragOverlay adjustScale={true} wrapperElement="div">
+                {activeItem ? (
+                  <ImageOverlayCard
+                    className="absolute z-50 h-full w-full"
+                    slug={activeItem.slug}
+                  />
+                ) : null}
+              </DragOverlay>
             </div>
           </DndContext>
         </div>
